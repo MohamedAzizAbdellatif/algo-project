@@ -2,7 +2,7 @@
 #define ARBRE_H
 
 #define MAX_CHOIX 9
-#define MAX_NIVEAU 2
+#define MAX_NIVEAU 5
 
 typedef struct Noeud {
     int valeur;                        // coût de la case
