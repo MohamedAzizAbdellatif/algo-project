@@ -5,68 +5,64 @@
 #include <limits.h>
 #include "arbre.h"
 
-// Crée un nouveau nœud avec une valeur de coût et un déplacement
-Noeud* creerNoeud(int valeur, const char* deplacement) {
-    Noeud* nouveauNoeud = (Noeud*)malloc(sizeof(Noeud));
-    nouveauNoeud->valeur = valeur;
-    strcpy(nouveauNoeud->deplacement, deplacement);
-    for (int i = 0; i < MAX_CHOIX; i++) {
-        nouveauNoeud->enfants[i] = NULL;
+// Fonction pour créer un nœud avec un nombre spécifique de fils
+t_node* createNode(int value, int depth, int nbSons) {
+    t_node* newNode = (t_node*)malloc(sizeof(t_node));
+    if (!newNode) return NULL; // Vérification allocation mémoire
+
+    newNode->value = value;
+    newNode->depth = depth;
+    newNode->nbSons = nbSons;
+    newNode->sons = (t_node**)malloc(nbSons * sizeof(t_node*));
+    for (int i = 0; i < nbSons; i++) {
+        newNode->sons[i] = NULL;
     }
-    return nouveauNoeud;
+
+    return newNode;
 }
-
-// Libère la mémoire allouée pour l'arbre
-void libererArbre(Noeud* noeud) {
-    if (noeud == NULL) return;
-    for (int i = 0; i < MAX_CHOIX; i++) {
-        libererArbre(noeud->enfants[i]);
+void construireArbreMouvements(t_node* noeud, int niveau, int mouvementsRestants) {
+    if (niveau >= 5 || mouvementsRestants <= 0) {
+        return; // Arrête la construction à 5 niveaux ou sans mouvements restants
     }
-    free(noeud);
+
+    for (int i = 0; i < mouvementsRestants; i++) {
+        int newValue = noeud->value + (i + 1); // Calculer un coût arbitraire
+        noeud->sons[i] = createNode(newValue, niveau + 1, mouvementsRestants - 1);
+
+        construireArbreMouvements(noeud->sons[i], niveau + 1, mouvementsRestants - 1);
+    }
 }
-
-// Parcourt l'arbre pour trouver la feuille de coût minimal
-void parcourirArbre(Noeud* noeud, char cheminActuel[MAX_NIVEAU][20], int niveau, CheminOptimal* meilleurChemin, int* cout_minimal) {
-    if (noeud == NULL) return;
-
-    // Ajouter le déplacement actuel au chemin
-    if (niveau < MAX_NIVEAU) {
-        strcpy(cheminActuel[niveau], noeud->deplacement);
-    }
-
-    // Vérifie si le nœud est une feuille
-    int estFeuille = 1;
-    for (int i = 0; i < MAX_CHOIX; i++) {
-        if (noeud->enfants[i] != NULL) {
-            estFeuille = 0;
-            break;
-        }
-    }
-
-    // Si c'est une feuille, on vérifie si elle a le coût minimal
-    if (estFeuille) {
-        if (noeud->valeur < *cout_minimal) {
-            *cout_minimal = noeud->valeur;
-            // Copier le chemin actuel dans le chemin optimal
-            for (int i = 0; i <= niveau; i++) {
-                strcpy(meilleurChemin->deplacements[i], cheminActuel[i]);
-            }
-            meilleurChemin->longueur = niveau + 1;
-        }
-    } else {
-        // Parcourir les enfants
-        for (int i = 0; i < MAX_CHOIX; i++) {
-            if (noeud->enfants[i] != NULL) {
-                parcourirArbre(noeud->enfants[i], cheminActuel, niveau + 1, meilleurChemin, cout_minimal);
+int trouverCheminMinimal(t_node* noeud, int* chemin, int* meilleurChemin, int niveau, int* coutMin) {
+    if (niveau == 5 || noeud->nbSons == 0) { // Si feuille atteinte
+        if (noeud->value < *coutMin) {
+            *coutMin = noeud->value;
+            for (int i = 0; i < niveau; i++) {
+                meilleurChemin[i] = chemin[i];
             }
         }
+        return noeud->value;
     }
+
+    for (int i = 0; i < noeud->nbSons; i++) {
+        chemin[niveau] = i; // Stocker le mouvement actuel
+        trouverCheminMinimal(noeud->sons[i], chemin, meilleurChemin, niveau + 1, coutMin);
+    }
+    return *coutMin;
 }
 
-// Affiche le chemin optimal
-void afficherCheminOptimal(CheminOptimal* chemin) {
-    printf("Chemin optimal :\n");
-    for (int i = 0; i < chemin->longueur; i++) {
-        printf("  %s\n", chemin->deplacements[i]);
+#include <stdlib.h>
+
+void freeNode(t_node* node) {
+    if (node == NULL) return;
+
+    // Libère chaque fils de manière récursive
+    for (int i = 0; i < node->nbSons; i++) {
+        freeNode(node->sons[i]);
     }
+
+    // Libère le tableau dynamique des fils
+    free(node->sons);
+
+    // Libère le nœud lui-même
+    free(node);
 }

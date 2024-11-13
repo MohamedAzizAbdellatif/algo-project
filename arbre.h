@@ -1,24 +1,25 @@
-#ifndef ARBRE_H
-#define ARBRE_H
+#ifndef NODE_H
+#define NODE_H
 
-#define MAX_CHOIX 9
-#define MAX_NIVEAU 5
+#include <stdlib.h>
 
-typedef struct Noeud {
-    int valeur;                        // coût de la case
-    char deplacement[20];              // nom du déplacement
-    struct Noeud* enfants[MAX_CHOIX];  // enfants pour chaque choix suivant
-} Noeud;
+// Définition de la structure t_node pour un arbre
+typedef struct s_node {
+    int value;              // Coût associé à la position atteinte par ce nœud
+    int depth;              // Profondeur du nœud dans l'arbre
+    struct s_node** sons;   // Tableau dynamique de pointeurs vers les fils
+    int nbSons;             // Nombre de fils actuels
+} t_node;
 
-typedef struct CheminOptimal {
-    char deplacements[MAX_NIVEAU][20]; // chemin optimal (jusqu'à 3 déplacements)
-    int longueur;                      // longueur du chemin
-}CheminOptimal;
+// Fonction pour créer un nœud avec un nombre spécifique de fils
+t_node* createNode(int value, int depth, int nbSons);
 
-// Fonctions de gestion de l'arbre
-Noeud* creerNoeud(int valeur, const char* deplacement);
-void libererArbre(Noeud* noeud);
-void parcourirArbre(Noeud* noeud, char cheminActuel[MAX_NIVEAU][20], int niveau, CheminOptimal* meilleurChemin, int* cout_minimal);
-void afficherCheminOptimal(CheminOptimal* chemin);
+// Fonction pour construire un arbre de mouvements
+void construireArbreMouvements(t_node* noeud, int niveau, int mouvementsRestants);
 
-#endif // ARBRE_H
+// Fonction pour trouver le chemin minimal dans l'arbre
+int trouverCheminMinimal(t_node* noeud, int* chemin, int* meilleurChemin, int niveau, int* coutMin);
+
+void freeNode(t_node* node);
+
+#endif // NODE_H
